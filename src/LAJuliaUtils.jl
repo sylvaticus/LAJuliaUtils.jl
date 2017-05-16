@@ -2,7 +2,7 @@ module LAJuliaUtils
 
 export addCols!, pivot
 
-using DataFrames
+using DataFrames, DataStructures
 
 """
     addCols!(df, colsName, colsType)
@@ -85,8 +85,8 @@ pivot(df::AbstractDataFrame, rowFields, colField, valuesField; <keyword argument
 * ops can be any supported Julia operation over a single array, for example: `sum`, `mean`, `length`, `countnz`, `maximum`, `minimum`, `var`, `std`, `prod`.
   Multiple operations can be specified using an array, and in such case an additional column is created to index them.
 * filters are optional. Only `in` filter is supported.
-* sort is possible only for row fields. You can specify reverse ordering for any column passing a touple (:colname, true) instead of just :colname.
-  You can pass multiple columns to be sorted in an array, e.g. [(:col1,true),:col2].
+* sort is possible only for row fields. Using a touple instead of just `:colname` you can specify reverse ordering (e.g. `(:colname, true)`) or a custom sort order (e.g. `(:colname, [val1,val2,val3])`. Elements you do not specify are not sorted but put behind those that you specify).
+  You can pass multiple columns to be sorted in an array, e.g. [(:col1,true),:col2,(:col3,[val1,val2,val3])].
 
 # Examples
 ```julia
@@ -130,7 +130,12 @@ function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::
     end
     for i in sortv
         if(isa(i, Tuple))
-          push!(sortOptions, order(i[1], rev = i[2]))
+            if (isa(i[2], Array)) # The second option is a custom order
+                orderArray = Array(collect(union(    OrderedSet(i[2]),  OrderedSet(unique(df[i[1]]))        )))
+                push!(sortOptions, order(i[1], by = x->Dict(x => i for (i,x) in enumerate(orderArray))[x] ))
+            else                  # The second option is a reverse direction flag
+                push!(sortOptions, order(i[1], rev = i[2]))
+            end
         else
           push!(sortOptions, order(i))
         end
