@@ -188,8 +188,8 @@ end
 Sort a dataframe by multiple cols, each specifying sort direction and custom sort order.
 
 # Arguments
-* `df`: the dataframe to add the columns to
-* `sortops=[]`: the name(s) of columns to sort (symbols)
+* `df`: the dataframe to sort
+* `sortops=[]`: the name(s) of column(s) to sort (symbol, array of symbols, tuples or array of tuples)
 
 # Notes
 * Using a touple instead of just `:colname` you can specify reverse ordering (e.g. `(:colname, true)`) or a custom sort order (e.g. `(:colname, [val1,val2,val3])`).
