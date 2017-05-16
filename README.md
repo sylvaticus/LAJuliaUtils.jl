@@ -1,4 +1,4 @@
-# lajuliautils
+# LAJuliaUtils
 
 Utility functions for Julia, mainly dataframes operations.
 
