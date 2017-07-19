@@ -2,7 +2,9 @@
 
 Utility functions for Julia, mainly dataframes operations.
 
-Read more about them using the `?function` syntax
+Read more about them using the `?function` syntax.
+
+This is NOT a Julia registered package, install it with `Pkg.clone("git@github.com:sylvaticus/LAJuliaUtils.jl.git")`
 
 Currently provided functions:
 
