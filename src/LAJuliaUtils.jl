@@ -26,6 +26,7 @@ Adds to the dataframe empty column(s) colsName of type(s) colsType
 
 # Examples
 ```julia
+julia> using DataFrames, LAJuliaUtils
 julia> addCols!(df,[:col1,:col2],Int)
 ```
 """
@@ -97,6 +98,7 @@ pivot(df::AbstractDataFrame, rowFields, colField, valuesField; <keyword argument
 
 # Examples
 ```julia
+julia> using DataFrames, LAJuliaUtils
 julia> df = DataFrame(region   = ["US","US","US","US","EU","EU","EU","EU","US","US","US","US","EU","EU","EU","EU"],
                       product  = ["apple","apple","banana","banana","apple","apple","banana","banana","apple","apple","banana","banana","apple","apple","banana","banana"],
                       year     = [2010,2011,2010,2011,2010,2011,2010,2011,2010,2011,2010,2011,2010,2011,2010,2011],
@@ -198,6 +200,7 @@ Sort a dataframe by multiple cols, each specifying sort direction and custom sor
 
 # Examples
 ```julia
+julia> using DataFrames, LAJuliaUtils
 julia> df = DataFrame(
               c1 = ['a','b','c','a','b','c'],
               c2 = ["aa","aa","bb","bb","cc","cc"],
@@ -236,6 +239,49 @@ function customSort!(df::DataFrame, sortops)
         end
     end
     return sort!(df, cols = sortOptions)
+end
+
+##############################################################################
+##
+## toDict()
+##
+##############################################################################
+
+"""
+    toDict(df, dimCols, valueCol)
+
+Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
+
+# Arguments
+* `df`: the dataframe to convert
+* `dimCols`: the dimensions to be used as key (in the order given)
+* `valueCol`: the dimension to be used to store the value
+
+# Examples
+```julia
+julia> using DataFrames, LAJuliaUtils
+julia> df = DataFrame(
+                colour = ["green","blue","white","green","green"],
+                shape = ["circle", "triangle", "square","square","circle"],
+                border = ["dotted", "line", "line", "line", "dotted"],
+                area = [1.1, 2.3, 3.1, 4.2, 5.2]
+            )
+julia> myDict = toDict(df,[:colour,:shape,:border],:area)
+Dict{Any,Any} with 4 entries:
+  ("green", "square", "line")   => 4.2
+  ("white", "square", "line")   => 3.1
+  ("green", "circle", "dotted") => 5.2
+  ("blue", "triangle", "line")  => 2.3
+```
+"""
+function toDict(df, dimCols, valueCol)
+    toReturn = Dict()
+    for r in eachrow(df)
+        keyValues = []
+        [push!(keyValues,r[d]) for d in dimCols]
+        toReturn[(keyValues...)] = r[valueCol]
+    end
+    return toReturn
 end
 
 end # module LAJuliaUtils
