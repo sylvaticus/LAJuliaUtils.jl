@@ -1,6 +1,6 @@
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!
+export addCols!, pivot, customSort!, toDict
 
 using DataFrames, DataStructures
 
