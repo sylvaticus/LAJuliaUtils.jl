@@ -1,8 +1,8 @@
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict
+export addCols!, pivot, customSort!, toDict, plotBeta, plotBeta!
 
-using DataFrames, DataStructures
+using DataFrames, DataStructures, SymPy, Plots, QuadGK
 
 
 ##############################################################################
@@ -283,5 +283,55 @@ function toDict(df, dimCols, valueCol)
     end
     return toReturn
 end
+
+##############################################################################
+##
+## plotBeta()
+##
+##############################################################################
+
+"""
+    plotBeta(α,β)
+
+Plot the probability density function of the beta distribution (new plot).
+
+# Arguments
+* `α`
+* `β`
+"""
+function plotBeta(α,β)
+    x = symbols("x")
+    a, b = symbols("a b", integers= true, positive=true)
+    Bfunction = quadgk(u->u^(α-1)*(1-u)^(β-1),0.0,1.0)[1]
+    Beta = 1/Bfunction * x^(a-1)*(1-x)^(b-1)
+    BetaResolved = subs(Beta,(a,α),(b,β))
+    plot(x,BetaResolved,0,1,show=true)
+end
+
+##############################################################################
+##
+## plotBeta!()
+##
+##############################################################################
+
+"""
+    plotBeta!(α,β)
+
+Plot the probability density function of the beta distribution (add to existing plot).
+
+# Arguments
+* `α`
+* `β`
+"""
+function plotBeta!(α,β)
+    x = symbols("x")
+    a, b = symbols("a b", integers= true, positive=true)
+    Bfunction = quadgk(u->u^(α-1)*(1-u)^(β-1),0.0,1.0)[1]
+    Beta = 1/Bfunction * x^(a-1)*(1-x)^(b-1)
+    BetaResolved = subs(Beta,(a,α),(b,β))
+    plot!(x,BetaResolved,0,1,show=true)
+    gui()
+end
+
 
 end # module LAJuliaUtils
