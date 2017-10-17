@@ -1,6 +1,6 @@
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict #, plotBeta, plotBeta!
+export addCols!, pivot, customSort!, toDict, toArray #, plotBeta, plotBeta!
 
 using DataFrames, DataStructures #, SymPy,  QuadGK
 
