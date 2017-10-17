@@ -1,8 +1,8 @@
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, plotBeta, plotBeta!
+export addCols!, pivot, customSort!, toDict #, plotBeta, plotBeta!
 
-using DataFrames, DataStructures, SymPy, Plots, QuadGK
+using DataFrames, DataStructures #, SymPy,  QuadGK
 
 
 ##############################################################################
@@ -286,52 +286,107 @@ end
 
 ##############################################################################
 ##
-## plotBeta()
+## toArray()
 ##
 ##############################################################################
 
 """
-    plotBeta(α,β)
+    toArray(DA;<keyword arguments>)
 
-Plot the probability density function of the beta distribution (new plot).
+Convert a DataArray{T1} in a normal Array{T2,1}, specifying T2 and optionally removing NA elements.
 
 # Arguments
-* `α`
-* `β`
+* `DA`: the DataArray to convert
+* `arrayT`: the type of Array wanted (default: the same type in the DataArray)
+* `removeNA`: remove NA records (default false)
+
+If NA elements are detected (and the option removeNA is not selected) the returned Array will have a Union type of NAtype and the wanted type, as to host the NA values.
 """
-function plotBeta(α,β)
-    x = symbols("x")
-    a, b = symbols("a b", integers= true, positive=true)
-    Bfunction = quadgk(u->u^(α-1)*(1-u)^(β-1),0.0,1.0)[1]
-    Beta = 1/Bfunction * x^(a-1)*(1-x)^(b-1)
-    BetaResolved = subs(Beta,(a,α),(b,β))
-    plot(x,BetaResolved,0,1,show=true)
+function toArray(DA;arrayT=Any,removeNA=false)
+    nNA = length(find(x -> isna(x), sets[:priProducts]))
+    if removeNA
+        DA = dropna(DA)
+    end
+    origType = eltype(DA)
+    destType = origType
+    innerDestType = origType
+    if (nNA>0 && !removeNA && arrayT == Any)
+        destType = Union{origType, DataArrays.NAtype}
+    elseif (nNA>0 && !removeNA && arrayT != Any)
+        destType = Union{arrayT, DataArrays.NAtype}
+        innerDestType = arrayT
+    elseif (nNA == 0 || removeNA) && arrayT != Any
+        destType = arrayT
+        innerDestType = arrayT
+    end
+
+    if (destType == String) || (destType == Union{String, DataArrays.NAtype})
+        toReturn = Array{destType,1}()
+        for i in DA
+            push!(toReturn, isna(i)? NA : string(i) )
+        end
+        println(destType)
+        println(toReturn)
+        return toReturn
+    else
+        println(destType)
+        toReturn = Array{destType,1}()
+        for i in DA
+            push!(toReturn, isna(i)? NA : convert(innerDestType,i))
+        end
+        return toReturn
+    end
 end
 
-##############################################################################
-##
-## plotBeta!()
-##
-##############################################################################
 
-"""
-    plotBeta!(α,β)
-
-Plot the probability density function of the beta distribution (add to existing plot).
-
-# Arguments
-* `α`
-* `β`
-"""
-function plotBeta!(α,β)
-    x = symbols("x")
-    a, b = symbols("a b", integers= true, positive=true)
-    Bfunction = quadgk(u->u^(α-1)*(1-u)^(β-1),0.0,1.0)[1]
-    Beta = 1/Bfunction * x^(a-1)*(1-x)^(b-1)
-    BetaResolved = subs(Beta,(a,α),(b,β))
-    plot!(x,BetaResolved,0,1,show=true)
-    gui()
-end
-
+# ##############################################################################
+# ##
+# ## plotBeta()
+# ##
+# ##############################################################################
+#
+# """
+#     plotBeta(α,β)
+#
+# Plot the probability density function of the beta distribution (new plot).
+#
+# # Arguments
+# * `α`
+# * `β`
+# """
+# function plotBeta(α,β)
+#     x = symbols("x")
+#     a, b = symbols("a b", integers= true, positive=true)
+#     Bfunction = quadgk(u->u^(α-1)*(1-u)^(β-1),0.0,1.0)[1]
+#     Beta = 1/Bfunction * x^(a-1)*(1-x)^(b-1)
+#     BetaResolved = subs(Beta,(a,α),(b,β))
+#     plot(x,BetaResolved,0,1,show=true)
+#     gui()
+# end
+#
+# ##############################################################################
+# ##
+# ## plotBeta!()
+# ##
+# ##############################################################################
+#
+# """
+#     plotBeta!(α,β)
+#
+# Plot the probability density function of the beta distribution (add to existing plot).
+#
+# # Arguments
+# * `α`
+# * `β`
+# """
+# function plotBeta!(α,β)
+#     x = symbols("x")
+#     a, b = symbols("a b", integers= true, positive=true)
+#     Bfunction = quadgk(u->u^(α-1)*(1-u)^(β-1),0.0,1.0)[1]
+#     Beta = 1/Bfunction * x^(a-1)*(1-x)^(b-1)
+#     BetaResolved = subs(Beta,(a,α),(b,β))
+#     plot!(x,BetaResolved,0,1,show=true)
+#     gui()
+# end
 
 end # module LAJuliaUtils
