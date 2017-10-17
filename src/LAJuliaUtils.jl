@@ -303,7 +303,7 @@ Convert a DataArray{T1} in a normal Array{T2,1}, specifying T2 and optionally re
 If NA elements are detected (and the option removeNA is not selected) the returned Array will have a Union type of NAtype and the wanted type, as to host the NA values.
 """
 function toArray(DA;arrayT=Any,removeNA=false)
-    nNA = length(find(x -> isna(x), sets[:priProducts]))
+    nNA = length(find(x -> isna(x), DA))
     if removeNA
         DA = dropna(DA)
     end
