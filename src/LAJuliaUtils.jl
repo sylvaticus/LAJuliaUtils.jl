@@ -1,8 +1,10 @@
+__precompile__()
+
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, toArray #, plotBeta, plotBeta!
+export addCols!, pivot, customSort!, toDict, toArray, defEmptyIT, defVars  #, plotBeta, plotBeta!
 
-using DataFrames, DataStructures #, SymPy,  QuadGK
+using DataFrames, DataStructures, IndexedTables, NamedTuples # DataFramesMeta , SymPy,  QuadGK
 
 
 ##############################################################################
@@ -325,17 +327,137 @@ function toArray(DA;arrayT=Any,removeNA=false)
         for i in DA
             push!(toReturn, isna(i)? NA : string(i) )
         end
-        println(destType)
-        println(toReturn)
         return toReturn
     else
-        println(destType)
         toReturn = Array{destType,1}()
         for i in DA
             push!(toReturn, isna(i)? NA : convert(innerDestType,i))
         end
         return toReturn
     end
+end
+
+##############################################################################
+##
+## toDataFrame()
+##
+##############################################################################
+
+toDataFrame(cols::Tuple, prefix="x") =
+  DataFrame(;(Symbol("$prefix$c") => cols[c] for c in fieldnames(cols))...)
+
+toDataFrame(cols::NamedTuples.NamedTuple, prefix="") =
+  DataFrame(;(c => cols[c] for c in fieldnames(cols))...)
+
+"""
+    toDataFrame(t)
+
+Convert an IndexedTable to a DataFrame, maintaining column types and (eventual) column names.
+
+"""
+toDataFrame(t::IndexedTable) =
+  hcat(toDataFrame(columns(keys(t))),toDataFrame(columns(values(t)),"y"))
+
+
+
+##############################################################################
+##
+## defEmptyIT()
+##
+##############################################################################
+
+"""
+  defEmptyIT(dimNames, dimTypes; <keyword arguments>)
+
+Define empty IndexedTable(s) with the specific dimension(s) and type(s).
+
+# Arguments
+* `dimNames`: array of names of the dimensions to define (can be empty)
+* `dimTypes`: array of types of the dimensions (must be same length of dimNames if the latter is not null)
+* `valueNames = []` array of names of the value cols to define (can be empty)
+* `valueTypes=[Float64]` array of types of the value cols to define (must be same length of valueNames if the latter is not null)
+* `n=1`: number of copies of the specified tables to return
+
+# Examples
+```julia
+julia> price,demand,supply = defEmptyVars(["region","item","qclass"],[String,String,Int64],valueNames=["val2000","val2010"],valueTypes=[Float64,Float64],n=3 )
+julia> waterContent = defEmptyVars(["region","item"],[String,String])
+julia> price["US","apple",1] = 3.2,3.4
+julia> waterContent["US","apple"] = 0.2
+```
+
+# Notes
+Single index or single column can not be associated to a name.
+"""
+function defEmptyIT(dimNames, dimTypes; valueNames=[],valueTypes=[Float64],n=1)
+    toReturn = []
+    dimSNames = [Symbol(d) for d in dimNames]
+    valueSNames = [Symbol(d) for d in valueNames]
+    for i in 1:n
+        # inside the loop as they are passed by reference!
+        dimValues = [Array{T,1}() for T in dimTypes]
+        valueValues = [Array{T,1}() for T in valueTypes]
+        t = Any
+        if (length(dimTypes) > 1)
+            d = length(dimSNames)  > 0 ? Columns(dimValues..., names=dimSNames) : Columns(dimValues...)
+            if (length(valueTypes) > 1)
+                v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
+                t = IndexedTables.Table(d,v)
+            else
+                t = IndexedTables.Table(d,valueValues[1])
+            end
+        else
+            if (length(valueTypes) > 1)
+                v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
+                t = IndexedTables.Table(dimValues[1],v)
+            else
+                t = IndexedTables.Table(dimValues[1],valueValues[1])
+            end
+        end
+        if(n==1)
+            return t
+        else
+            push!(toReturn,t)
+        end
+    end
+    return (toReturn...)
+end
+
+##############################################################################
+##
+## defVars()
+##
+##############################################################################
+
+"""
+  defVars(vars, df, dimensions;<keyword arguments>)
+
+Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
+
+# Arguments
+* `vars`: the array of variables to lookup
+* `df`: the source of the dataframe, that must be in the format parName|d1|d2|...|value
+* `dimensions`: the name of the column containing the dimensions over which the variables are defined
+* `varNameCol (def: "varName")`: the name of the column in the df containing the variables names
+* `valueCol (def: "value")`: the name of the column in the df containing the values
+
+# Examples
+```julia
+julia> (vol,mortCoef)  = defVars(["vol","mortCoef"], forData,["region","d1","year"], varNameCol="parName", valueCol="value")
+```
+"""
+function defVars(vars, df, dimensions; varNameCol="varName", valueCol="value")
+  toReturn = []
+  sDimensions = [Symbol(d) for d in dimensions]
+  for var in vars
+      filteredDf = df[df[Symbol(varNameCol)] .== var,:]
+      #filteredDf = @where(df, _I_(Symbol(varNameCol)) .== var)
+      dimValues =  [toArray(filteredDf[Symbol(dim)]) for dim in dimensions]
+      values = toArray(filteredDf[Symbol(valueCol)])
+      t = IndexedTables.Table(dimValues..., names=sDimensions, values)
+      push!(toReturn,t)
+  end
+  return (toReturn...)
 end
 
 

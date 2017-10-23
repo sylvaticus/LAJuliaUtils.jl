@@ -11,7 +11,10 @@ This is NOT a Julia registered package:
 Provided functions:
 
 * `addCols!(df, colsName, colsType)` - Adds to the DataFrame empty column(s) colsName of type(s) colsType
-* `pivot(df::AbstractDataFrame, rowFields, colField, valuesField; <keyword arguments>)` - Pivot and optionally filter and sort in a single function
+* `pivot(df::AbstractDataFrame, rowFields, colField, valuesField; <kwd args>)` - Pivot and optionally filter and sort in a single function
 * `customSort!(df, sortops)`         - Sort a DataFrame by multiple cols, each specifying sort direction and custom sort order
 * `toDict(df, dimCols, valueCol)`    - Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
 * `toArray(DA;<keyword arguments>)`  - Convert a DataArray{T1} in a normal Array{T2,1}, specifying T2 and optionally removing NA elements.
+* `toDataFrame(t)`                   - Convert an IndexedTable to a DataFrame, maintaining column types and (eventual) column names.
+* `defEmptyIT(dimNames, dimTypes; <kwd args>) - Define empty IndexedTable(s) with the specific dimension(s) and type(s).
+* `defVars(vars, df, dimensions;<kwd args>)`  - Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
