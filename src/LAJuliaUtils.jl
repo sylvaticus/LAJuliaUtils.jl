@@ -507,7 +507,7 @@ with a given value.
 julia> fillNA!(quantity, 0, [priProducts, fTypes, dClasses])
 ```
 """
-function fillNA!(vars::AbstractArray{IndexedTable,1}, value, dimensions)
+function fillNA!(vars::AbstractArray{<:IndexedTable,1}, value, dimensions)
     allKeys = fillkeys(dimensions)
     #varsv = isa(vars, Array)? vars:[vars]
     for var in vars

@@ -16,6 +16,6 @@ Provided functions:
 * `toDict(df, dimCols, valueCol)`    - Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
 * `toArray(DA;<keyword arguments>)`  - Convert a DataArray{T1} in a normal Array{T2,1}, specifying T2 and optionally removing NA elements.
 * `toDataFrame(t)`                   - Convert an IndexedTable to a DataFrame, maintaining column types and (eventual) column names.
-* `defEmptyIT(dimNames, dimTypes; <kwd args>) - Define empty IndexedTable(s) with the specific dimension(s) and type(s).
-* `defVars(vars, df, dimensions;<kwd args>)`  - Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
-* `fillNA!(vars, value, dimensions)  - For each values in the specified dimensions, fill the values of IndexedTable(s) without a corresponding key.
+* `defEmptyIT(dimNames, dimTypes; <kwd args>)` - Define empty IndexedTable(s) with the specific dimension(s) and type(s).
+* `defVars(vars, df, dimensions;<kwd args>)`   - Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
+* `fillNA!(vars, value, dimensions)` - For each values in the specified dimensions, fill the values of IndexedTable(s) without a corresponding key.
