@@ -18,3 +18,4 @@ Provided functions:
 * `toDataFrame(t)`                   - Convert an IndexedTable to a DataFrame, maintaining column types and (eventual) column names.
 * `defEmptyIT(dimNames, dimTypes; <kwd args>) - Define empty IndexedTable(s) with the specific dimension(s) and type(s).
 * `defVars(vars, df, dimensions;<kwd args>)`  - Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
+* `fillNA!(vars, value, dimensions)  - For each values in the specified dimensions, fill the values of IndexedTable(s) without a corresponding key.

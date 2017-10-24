@@ -2,9 +2,9 @@ __precompile__()
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, toArray, defEmptyIT, defVars  #, plotBeta, plotBeta!
+export addCols!, pivot, customSort!, toDict, toArray, defEmptyIT, defVars, fillNA!  #, plotBeta, plotBeta!
 
-using DataFrames, DataStructures, IndexedTables, NamedTuples # DataFramesMeta , SymPy,  QuadGK
+using DataFrames, DataStructures, IndexedTables, NamedTuples#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
 
 
 ##############################################################################
@@ -447,19 +447,83 @@ julia> (vol,mortCoef)  = defVars(["vol","mortCoef"], forData,["region","d1","yea
 ```
 """
 function defVars(vars, df, dimensions; varNameCol="varName", valueCol="value")
-  toReturn = []
-  sDimensions = [Symbol(d) for d in dimensions]
-  for var in vars
-      filteredDf = df[df[Symbol(varNameCol)] .== var,:]
-      #filteredDf = @where(df, _I_(Symbol(varNameCol)) .== var)
-      dimValues =  [toArray(filteredDf[Symbol(dim)]) for dim in dimensions]
-      values = toArray(filteredDf[Symbol(valueCol)])
-      t = IndexedTables.Table(dimValues..., names=sDimensions, values)
-      push!(toReturn,t)
-  end
-  return (toReturn...)
+    toReturn = []
+    sDimensions = [Symbol(d) for d in dimensions]
+    for var in vars
+        filteredDf = df[df[Symbol(varNameCol)] .== var,:]
+        #filteredDf = @where(df, _I_(Symbol(varNameCol)) .== var)
+        dimValues =  [toArray(filteredDf[Symbol(dim)]) for dim in dimensions]
+        values = toArray(filteredDf[Symbol(valueCol)])
+        t = IndexedTables.Table(dimValues..., names=sDimensions, values)
+        if length(vars) > 1
+            push!(toReturn,t)
+        else
+            return t
+        end
+    end
+    return (toReturn...)
 end
 
+##############################################################################
+##
+## fillNA!()
+##
+##############################################################################
+
+function explode(base, elements)
+    toReturn = []
+    for b in base
+        for e in elements
+            newkey = vcat(b,[e])
+            push!(toReturn,newkey)
+        end
+    end
+    return toReturn
+end
+
+function fillkeys(dimensions)
+    toReturn = [[]]
+    for d in dimensions
+        toReturn = explode(toReturn,d)
+    end
+    return toReturn
+end
+
+"""
+  fillNA!(vars::IndexedTable, value, dimensions)
+
+For each values in the specified dimensions, fill the values of IndexedTable(s) without a corresponding key.
+
+As IndexedTables return a keyerror if they don't find the key, this funsction allows to "fill" the empty values
+with a given value.
+
+# Arguments
+* `vars`: the variable to fill the values. Can be either an Array of variables or a single one.
+* `value`: the value to be used to fill
+* `dimensions`: the arrays corresponding to the dimensions of the indexed table that one want to fill
+
+# Examples
+```julia
+julia> fillNA!(quantity, 0, [priProducts, fTypes, dClasses])
+```
+"""
+function fillNA!(vars::AbstractArray{IndexedTable,1}, value, dimensions)
+    allKeys = fillkeys(dimensions)
+    #varsv = isa(vars, Array)? vars:[vars]
+    for var in vars
+        varKeys = [values(k_idx) for k_idx in keys(var)]
+        for k in allKeys
+            if !(k in varKeys)
+                var[k...] = value
+            end
+        end
+    end
+    return nothing
+end
+function fillNA!(var::IndexedTable, value, dimensions)
+    fillNA!([var], value, dimensions)
+    return nothing
+end
 
 # ##############################################################################
 # ##
