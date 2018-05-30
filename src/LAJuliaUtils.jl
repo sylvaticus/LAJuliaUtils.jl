@@ -107,7 +107,7 @@ julia> df = DataFrame(region   = ["US","US","US","US","EU","EU","EU","EU","US","
                       produced = [3.3,3.2,2.3,2.1,2.7,2.8,1.5,1.3,  4.3,4.2,3.3,2.3,3.7,3.8,2.0,3.3],
                       consumed = [4.3,7.4,2.5,9.8,3.2,4.3,6.5,3.0,  5.3,7.4,3.5,9.8,4.2,6.3,8.5,4.0],
                       category = ['A','A','A','A','A','A','A','A', 'B','B','B','B','B','B','B','B',])
-julia> longDf = stack(df,[:produced,:consumed])
+julia> longDf = DataFrames.stack(df,[:produced,:consumed])
 julia> pivDf  = pivot(longDf, [:product, :region,], :year, :value,
                       ops    = [mean, var],
                       filter = Dict(:variable => [:consumed]),
@@ -127,6 +127,15 @@ julia> pivDf  = pivot(longDf, [:product, :region,], :year, :value,
 ```
 """
 function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::Symbol; ops=sum, filter::Dict=Dict(), sort=[])
+
+    #longDf, [:product, :region,], :year, :value,
+    #df = longDf
+    #rowFields = [:product, :region,]
+    #colField = :year
+    #valuesField = :value
+    #ops=sum
+    #filter=Dict()
+    #sort=[]
 
     for (k,v) in filter
       df = df[ [i in v for i in df[k]], :]
@@ -173,9 +182,9 @@ function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::
         push!(dfs,dft)
     end
 
-    df = vcat(dfs)
-    df = unstack(df,colField,valuesField)
-    sort!(df, cols = sortOptions)
+    df = vcat(dfs...)
+    df = DataFrames.unstack(df,colField,valuesField)
+    sort!(df, sortOptions)
     return df
 end
 
