@@ -2,9 +2,9 @@ __precompile__()
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, toArray, defEmptyIT, defVars, fillMissings!  #, plotBeta, plotBeta!
+export addCols!, pivot, customSort!, toDict, defEmptyIT, defVars, fillMissings!  #, plotBeta, plotBeta!
 
-using DataFrames, DataStructures, IndexedTables, NamedTuple, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
+using DataFrames, DataStructures, IndexedTables, NamedTuples, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
 
 
 ##############################################################################
@@ -297,57 +297,6 @@ end
 
 ##############################################################################
 ##
-## toArray()
-##
-##############################################################################
-
-"""
-    toArray(DA;<keyword arguments>)
-
-Convert a DataArray{T1} in a normal Array{T2,1}, specifying T2 and optionally removing missing elements.
-
-# Arguments
-* `DA`: the DataArray to convert
-* `arrayT`: the type of Array wanted (default: the same type in the DataArray)
-* `removeMissing`: remove missing records (default false)
-
-If missing elements are detected (and the option removeMissing is not selected) the returned Array will have a Union type of Missing and the wanted type, as to host the missing values.
-"""
-function toArray(DA;arrayT=Any,removeMissing=false)
-    nmissing = length(find(x -> isna(x), DA))
-    if removeMissing
-        DA = dropmissing(DA) #TODO check this
-    end
-    origType = eltype(DA)
-    destType = origType
-    innerDestType = origType
-    if (nmissing>0 && !removeMissing && arrayT == Any)
-        destType = Union{origType, Missing}
-    elseif (nmissing>0 && !removeMissing && arrayT != Any)
-        destType = Union{arrayT, Missing}
-        innerDestType = arrayT
-    elseif (nmissing == 0 || removeMissing) && arrayT != Any
-        destType = arrayT
-        innerDestType = arrayT
-    end
-
-    if (destType == String) || (destType == Union{String, Missing})
-        toReturn = Array{destType,1}()
-        for i in DA
-            push!(toReturn, ismissing(i)? missing : string(i) )
-        end
-        return toReturn
-    else
-        toReturn = Array{destType,1}()
-        for i in DA
-            push!(toReturn, ismissing(i)? missing : convert(innerDestType,i))
-        end
-        return toReturn
-    end
-end
-
-##############################################################################
-##
 ## toDataFrame()
 ##
 ##############################################################################
@@ -516,7 +465,7 @@ with a given value.
 julia> fillMissings!(quantity, 0, [priProducts, fTypes, dClasses])
 ```
 """
-function fillMissings!(vars::AbstractArray{<:IndexedTable,1}, value, dimensions)
+function fillMissings!(vars::AbstractArray{<:NDSparse,1}, value, dimensions)
     allKeys = fillkeys(dimensions)
     #varsv = isa(vars, Array)? vars:[vars]
     for var in vars
@@ -529,7 +478,7 @@ function fillMissings!(vars::AbstractArray{<:IndexedTable,1}, value, dimensions)
     end
     return nothing
 end
-function fillMissings!(var::IndexedTable, value, dimensions)
+function fillMissings!(var::NDSparse, value, dimensions)
     fillMissings!([var], value, dimensions)
     return nothing
 end
