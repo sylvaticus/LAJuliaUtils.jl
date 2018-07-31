@@ -14,7 +14,7 @@ Provided functions:
 * `pivot(df::AbstractDataFrame, rowFields, colField, valuesField; <kwd args>)` - Pivot and optionally filter and sort in a single function
 * `customSort!(df, sortops)`         - Sort a DataFrame by multiple cols, each specifying sort direction and custom sort order
 * `toDict(df, dimCols, valueCol)`    - Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
-* `toDataFrame(t)`                   - Convert an IndexedTable to a DataFrame, maintaining column types and (eventual) column names.
+* `toDataFrame(t)`                   - Convert an IndexedTable NDSparse table to a DataFrame, maintaining column types and (eventual) column names.
 * `defEmptyIT(dimNames, dimTypes; <kwd args>)` - Define empty IndexedTable(s) with the specific dimension(s) and type(s).
 * `defVars(vars, df, dimensions;<kwd args>)`   - Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
 * `fillMissings!(vars, value, dimensions)` - For each values in the specified dimensions, fill the values of IndexedTable(s) without a corresponding key.

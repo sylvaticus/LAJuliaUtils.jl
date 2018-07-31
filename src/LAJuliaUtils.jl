@@ -2,7 +2,7 @@ __precompile__()
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, defEmptyIT, defVars, fillMissings!  #, plotBeta, plotBeta!
+export addCols!, pivot, customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame  #, plotBeta, plotBeta!
 
 using DataFrames, DataStructures, IndexedTables, NamedTuples, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
 
@@ -302,21 +302,20 @@ end
 ##############################################################################
 
 toDataFrame(cols::Tuple, prefix="x") =
-  DataFrame(;(Symbol("$prefix$c") => cols[c] for c in fieldnames(cols))...)
-
+    DataFrame(;(Symbol("$prefix$c") => cols[c] for c in fieldnames(cols))...)
 toDataFrame(cols::NamedTuples.NamedTuple, prefix="") =
-  DataFrame(;(c => cols[c] for c in fieldnames(cols))...)
+    DataFrame(;(c => cols[c] for c in fieldnames(cols))...)
+toDataFrame(cols::Array, prefix="y") =
+    DataFrame(;Symbol("y1") => [c for c in cols])
 
 """
     toDataFrame(t)
 
-Convert an IndexedTable to a DataFrame, maintaining column types and (eventual) column names.
+Convert an IndexedTable of type NDSparse to a DataFrame, maintaining column types and (eventual) column names.
 
 """
-toDataFrame(t::IndexedTable) =
-  hcat(toDataFrame(columns(keys(t))),toDataFrame(columns(values(t)),"y"))
-
-
+toDataFrame(t::IndexedTables.NDSparse) =
+    hcat(toDataFrame(columns(keys(t))), toDataFrame(columns(values(t)),"y"))
 
 ##############################################################################
 ##
@@ -360,16 +359,16 @@ function defEmptyIT(dimNames, dimTypes; valueNames=[],valueTypes=[Float64],n=1)
             d = length(dimSNames)  > 0 ? Columns(dimValues..., names=dimSNames) : Columns(dimValues...)
             if (length(valueTypes) > 1)
                 v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
-                t = IndexedTables.Table(d,v)
+                t = IndexedTables.NDSparse(d,v)
             else
-                t = IndexedTables.Table(d,valueValues[1])
+                t = IndexedTables.NDSparse(d,valueValues[1])
             end
         else
             if (length(valueTypes) > 1)
                 v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
-                t = IndexedTables.Table(dimValues[1],v)
+                t = IndexedTables.NDSparse(dimValues[1],v)
             else
-                t = IndexedTables.Table(dimValues[1],valueValues[1])
+                t = IndexedTables.NDSparse(dimValues[1],valueValues[1])
             end
         end
         if(n==1)
@@ -412,7 +411,7 @@ function defVars(vars, df, dimensions; varNameCol="varName", valueCol="value")
         #filteredDf = @where(df, _I_(Symbol(varNameCol)) .== var)
         dimValues =  [toArray(filteredDf[Symbol(dim)]) for dim in dimensions]
         values = toArray(filteredDf[Symbol(valueCol)])
-        t = IndexedTables.Table(dimValues..., names=sDimensions, values)
+        t = IndexedTables.NDSparse(dimValues..., names=sDimensions, values)
         if length(vars) > 1
             push!(toReturn,t)
         else
