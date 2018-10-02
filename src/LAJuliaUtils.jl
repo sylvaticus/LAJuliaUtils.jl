@@ -2,7 +2,8 @@
 
 module LAJuliaUtils
 
-export addCols!, pivot
+export addCols!, pivot, customSort!
+
 
 #todo: customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame
 
@@ -191,70 +192,70 @@ function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::
     return df
 end
 
-#
-# ##############################################################################
-# ##
-# ## customSort!()
-# ##
-# ##############################################################################
-#
-# """
-#     customSort!(df, sortops)
-#
-# Sort a dataframe by multiple cols, each specifying sort direction and custom sort order.
-#
-# # Arguments
-# * `df`: the dataframe to sort
-# * `sortops=[]`: the name(s) of column(s) to sort (symbol, array of symbols, tuples or array of tuples)
-#
-# # Notes
-# * Using a touple instead of just `:colname` you can specify reverse ordering (e.g. `(:colname, true)`) or a custom sort order (e.g. `(:colname, [val1,val2,val3])`).
-# * Elements you do not specify are not sorted but are put behind those that you specify.
-# * You can pass multiple columns to be sorted in an array, e.g. [(:col1,true),:col2,(:col3,[val1,val2,val3])].
-#
-# # Examples
-# ```julia
-# julia> using DataFrames, LAJuliaUtils
-# julia> df = DataFrame(
-#               c1 = ['a','b','c','a','b','c'],
-#               c2 = ["aa","aa","bb","bb","cc","cc"],
-#               c3 = [1,2,3,10,20,30],
-#             )
-# julia> customSort!(df, [(:c2,["bb","cc"]),(:c1,['b','a','c'])])
-# 6×4 DataFrames.DataFrame
-# │ Row │ c1  │ c2   │ c3 │ c4 │
-# ├─────┼─────┼──────┼────┼────┤
-# │ 1   │ 'a' │ "bb" │ 10 │ 1  │
-# │ 2   │ 'c' │ "bb" │ 3  │ 1  │
-# │ 3   │ 'b' │ "cc" │ 20 │ 1  │
-# │ 4   │ 'c' │ "cc" │ 30 │ 1  │
-# │ 5   │ 'b' │ "aa" │ 2  │ 1  │
-# │ 6   │ 'a' │ "aa" │ 1  │ 1  │
-# ```
-# """
-# function customSort!(df::DataFrame, sortops)
-#     sortv = []
-#     sortOptions = []
-#     if(isa(sortops, Array))
-#         sortv = sortops
-#     else
-#         push!(sortv,sortops)
-#     end
-#     for i in sortv
-#         if(isa(i, Tuple))
-#             if (isa(i[2], Array)) # The second option is a custom order
-#                 orderArray = Array(collect(union(    OrderedSet(i[2]),  OrderedSet(unique(df[i[1]]))        )))
-#                 push!(sortOptions, order(i[1], by = x->Dict(x => i for (i,x) in enumerate(orderArray))[x] ))
-#             else                  # The second option is a reverse direction flag
-#                 push!(sortOptions, order(i[1], rev = i[2]))
-#             end
-#         else
-#           push!(sortOptions, order(i))
-#         end
-#     end
-#     return sort!(df, cols = sortOptions)
-# end
-#
+
+##############################################################################
+##
+## customSort!()
+##
+##############################################################################
+
+"""
+    customSort!(df, sortops)
+
+Sort a dataframe by multiple cols, each specifying sort direction and custom sort order.
+
+# Arguments
+* `df`: the dataframe to sort
+* `sortops=[]`: the name(s) of column(s) to sort (symbol, array of symbols, tuples or array of tuples)
+
+# Notes
+* Using a touple instead of just `:colname` you can specify reverse ordering (e.g. `(:colname, true)`) or a custom sort order (e.g. `(:colname, [val1,val2,val3])`).
+* Elements you do not specify are not sorted but are put behind those that you specify.
+* You can pass multiple columns to be sorted in an array, e.g. [(:col1,true),:col2,(:col3,[val1,val2,val3])].
+
+# Examples
+```julia
+julia> using DataFrames, LAJuliaUtils
+julia> df = DataFrame(
+              c1 = ['a','b','c','a','b','c'],
+              c2 = ["aa","aa","bb","bb","cc","cc"],
+              c3 = [1,2,3,10,20,30],
+            )
+julia> customSort!(df, [(:c2,["bb","cc"]),(:c1,['b','a','c'])])
+6×4 DataFrames.DataFrame
+│ Row │ c1  │ c2   │ c3 │ c4 │
+├─────┼─────┼──────┼────┼────┤
+│ 1   │ 'a' │ "bb" │ 10 │ 1  │
+│ 2   │ 'c' │ "bb" │ 3  │ 1  │
+│ 3   │ 'b' │ "cc" │ 20 │ 1  │
+│ 4   │ 'c' │ "cc" │ 30 │ 1  │
+│ 5   │ 'b' │ "aa" │ 2  │ 1  │
+│ 6   │ 'a' │ "aa" │ 1  │ 1  │
+```
+"""
+function customSort!(df::DataFrame, sortops)
+    sortv = []
+    sortOptions = []
+    if(isa(sortops, Array))
+        sortv = sortops
+    else
+        push!(sortv,sortops)
+    end
+    for i in sortv
+        if(isa(i, Tuple))
+            if (isa(i[2], Array)) # The second option is a custom order
+                orderArray = Array(collect(union(    OrderedSet(i[2]),  OrderedSet(unique(df[i[1]]))        )))
+                push!(sortOptions, order(i[1], by = x->Dict(x => i for (i,x) in enumerate(orderArray))[x] ))
+            else                  # The second option is a reverse direction flag
+                push!(sortOptions, order(i[1], rev = i[2]))
+            end
+        else
+          push!(sortOptions, order(i))
+        end
+    end
+    return sort!(df, sortOptions)
+end
+
 # ##############################################################################
 # ##
 # ## toDict()
