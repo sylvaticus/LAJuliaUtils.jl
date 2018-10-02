@@ -1,10 +1,12 @@
-__precompile__()
+#__precompile__()
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame  #, plotBeta, plotBeta!
+export addCols!, pivot
 
-using DataFrames, DataStructures, IndexedTables, NamedTuples, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
+#todo: customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame
+
+using DataFrames, DataStructures, IndexedTables #, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
 
 
 ##############################################################################
@@ -62,7 +64,7 @@ function addCols!(df::DataFrame, colsName::Union{Symbol, Vector{Symbol}}, colsTy
         error("colsName must have the same length of colsType")
     end
     for (i,e) in enumerate(colsNameV)
-        df[e] = DataArray(colsTypeV[i],sfSize)
+        df[e] = Array{Union{colsTypeV[i],Missing},1}(missing,sfSize)
     end
 
     return df
@@ -161,7 +163,8 @@ function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::
         end
     end
 
-    catFields::AbstractVector{Symbol} = cat(1,rowFields, colField)
+    catFields::AbstractVector{Symbol} = cat(rowFields, colField, dims=1)
+
     dfs  = DataFrame[]
     opsv =[]
     if(isa(ops, Array))
@@ -188,299 +191,300 @@ function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::
     return df
 end
 
+#
+# ##############################################################################
+# ##
+# ## customSort!()
+# ##
+# ##############################################################################
+#
+# """
+#     customSort!(df, sortops)
+#
+# Sort a dataframe by multiple cols, each specifying sort direction and custom sort order.
+#
+# # Arguments
+# * `df`: the dataframe to sort
+# * `sortops=[]`: the name(s) of column(s) to sort (symbol, array of symbols, tuples or array of tuples)
+#
+# # Notes
+# * Using a touple instead of just `:colname` you can specify reverse ordering (e.g. `(:colname, true)`) or a custom sort order (e.g. `(:colname, [val1,val2,val3])`).
+# * Elements you do not specify are not sorted but are put behind those that you specify.
+# * You can pass multiple columns to be sorted in an array, e.g. [(:col1,true),:col2,(:col3,[val1,val2,val3])].
+#
+# # Examples
+# ```julia
+# julia> using DataFrames, LAJuliaUtils
+# julia> df = DataFrame(
+#               c1 = ['a','b','c','a','b','c'],
+#               c2 = ["aa","aa","bb","bb","cc","cc"],
+#               c3 = [1,2,3,10,20,30],
+#             )
+# julia> customSort!(df, [(:c2,["bb","cc"]),(:c1,['b','a','c'])])
+# 6×4 DataFrames.DataFrame
+# │ Row │ c1  │ c2   │ c3 │ c4 │
+# ├─────┼─────┼──────┼────┼────┤
+# │ 1   │ 'a' │ "bb" │ 10 │ 1  │
+# │ 2   │ 'c' │ "bb" │ 3  │ 1  │
+# │ 3   │ 'b' │ "cc" │ 20 │ 1  │
+# │ 4   │ 'c' │ "cc" │ 30 │ 1  │
+# │ 5   │ 'b' │ "aa" │ 2  │ 1  │
+# │ 6   │ 'a' │ "aa" │ 1  │ 1  │
+# ```
+# """
+# function customSort!(df::DataFrame, sortops)
+#     sortv = []
+#     sortOptions = []
+#     if(isa(sortops, Array))
+#         sortv = sortops
+#     else
+#         push!(sortv,sortops)
+#     end
+#     for i in sortv
+#         if(isa(i, Tuple))
+#             if (isa(i[2], Array)) # The second option is a custom order
+#                 orderArray = Array(collect(union(    OrderedSet(i[2]),  OrderedSet(unique(df[i[1]]))        )))
+#                 push!(sortOptions, order(i[1], by = x->Dict(x => i for (i,x) in enumerate(orderArray))[x] ))
+#             else                  # The second option is a reverse direction flag
+#                 push!(sortOptions, order(i[1], rev = i[2]))
+#             end
+#         else
+#           push!(sortOptions, order(i))
+#         end
+#     end
+#     return sort!(df, cols = sortOptions)
+# end
+#
+# ##############################################################################
+# ##
+# ## toDict()
+# ##
+# ##############################################################################
+#
+# """
+#     toDict(df, dimCols, valueCol)
+#
+# Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
+#
+# # Arguments
+# * `df`: the dataframe to convert
+# * `dimCols`: the dimensions to be used as key (in the order given)
+# * `valueCol`: the dimension to be used to store the value
+#
+# # Examples
+# ```julia
+# julia> using DataFrames, LAJuliaUtils
+# julia> df = DataFrame(
+#                 colour = ["green","blue","white","green","green"],
+#                 shape = ["circle", "triangle", "square","square","circle"],
+#                 border = ["dotted", "line", "line", "line", "dotted"],
+#                 area = [1.1, 2.3, 3.1, 4.2, 5.2]
+#             )
+# julia> myDict = toDict(df,[:colour,:shape,:border],:area)
+# Dict{Any,Any} with 4 entries:
+#   ("green", "square", "line")   => 4.2
+#   ("white", "square", "line")   => 3.1
+#   ("green", "circle", "dotted") => 5.2
+#   ("blue", "triangle", "line")  => 2.3
+# ```
+# """
+# function toDict(df, dimCols, valueCol)
+#     toReturn = Dict()
+#     for r in eachrow(df)
+#         keyValues = []
+#         [push!(keyValues,r[d]) for d in dimCols]
+#         toReturn[(keyValues...,)] = r[valueCol]
+#     end
+#     return toReturn
+# end
 
-##############################################################################
-##
-## customSort!()
-##
-##############################################################################
+# ############################################################################
+# #
+# # toDataFrame()
+# #
+# ############################################################################
+#
+#
+# toDataFrame(cols::Tuple, prefix="x") =
+#     DataFrame(;(Symbol("$prefix$c") => cols[c] for c in fieldnames(cols))...)
+# toDataFrame(cols::NamedTuples.NamedTuple, prefix="") =
+#     DataFrame(;(c => cols[c] for c in fieldnames(cols))...)
+# toDataFrame(cols::Array, prefix="y") =
+#     DataFrame(;Symbol("y1") => [c for c in cols])
+#
+# """
+#     toDataFrame(t)
+#
+# Convert an IndexedTable of type NDSparse to a DataFrame, maintaining column types and (eventual) column names.
+#
+# """
+# toDataFrame(t::IndexedTables.NDSparse) =
+#     hcat(toDataFrame(columns(keys(t))), toDataFrame(columns(values(t)),"y"))
 
-"""
-    customSort!(df, sortops)
-
-Sort a dataframe by multiple cols, each specifying sort direction and custom sort order.
-
-# Arguments
-* `df`: the dataframe to sort
-* `sortops=[]`: the name(s) of column(s) to sort (symbol, array of symbols, tuples or array of tuples)
-
-# Notes
-* Using a touple instead of just `:colname` you can specify reverse ordering (e.g. `(:colname, true)`) or a custom sort order (e.g. `(:colname, [val1,val2,val3])`).
-* Elements you do not specify are not sorted but are put behind those that you specify.
-* You can pass multiple columns to be sorted in an array, e.g. [(:col1,true),:col2,(:col3,[val1,val2,val3])].
-
-# Examples
-```julia
-julia> using DataFrames, LAJuliaUtils
-julia> df = DataFrame(
-              c1 = ['a','b','c','a','b','c'],
-              c2 = ["aa","aa","bb","bb","cc","cc"],
-              c3 = [1,2,3,10,20,30],
-            )
-julia> customSort!(df, [(:c2,["bb","cc"]),(:c1,['b','a','c'])])
-6×4 DataFrames.DataFrame
-│ Row │ c1  │ c2   │ c3 │ c4 │
-├─────┼─────┼──────┼────┼────┤
-│ 1   │ 'a' │ "bb" │ 10 │ 1  │
-│ 2   │ 'c' │ "bb" │ 3  │ 1  │
-│ 3   │ 'b' │ "cc" │ 20 │ 1  │
-│ 4   │ 'c' │ "cc" │ 30 │ 1  │
-│ 5   │ 'b' │ "aa" │ 2  │ 1  │
-│ 6   │ 'a' │ "aa" │ 1  │ 1  │
-```
-"""
-function customSort!(df::DataFrame, sortops)
-    sortv = []
-    sortOptions = []
-    if(isa(sortops, Array))
-        sortv = sortops
-    else
-        push!(sortv,sortops)
-    end
-    for i in sortv
-        if(isa(i, Tuple))
-            if (isa(i[2], Array)) # The second option is a custom order
-                orderArray = Array(collect(union(    OrderedSet(i[2]),  OrderedSet(unique(df[i[1]]))        )))
-                push!(sortOptions, order(i[1], by = x->Dict(x => i for (i,x) in enumerate(orderArray))[x] ))
-            else                  # The second option is a reverse direction flag
-                push!(sortOptions, order(i[1], rev = i[2]))
-            end
-        else
-          push!(sortOptions, order(i))
-        end
-    end
-    return sort!(df, cols = sortOptions)
-end
-
-##############################################################################
-##
-## toDict()
-##
-##############################################################################
-
-"""
-    toDict(df, dimCols, valueCol)
-
-Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
-
-# Arguments
-* `df`: the dataframe to convert
-* `dimCols`: the dimensions to be used as key (in the order given)
-* `valueCol`: the dimension to be used to store the value
-
-# Examples
-```julia
-julia> using DataFrames, LAJuliaUtils
-julia> df = DataFrame(
-                colour = ["green","blue","white","green","green"],
-                shape = ["circle", "triangle", "square","square","circle"],
-                border = ["dotted", "line", "line", "line", "dotted"],
-                area = [1.1, 2.3, 3.1, 4.2, 5.2]
-            )
-julia> myDict = toDict(df,[:colour,:shape,:border],:area)
-Dict{Any,Any} with 4 entries:
-  ("green", "square", "line")   => 4.2
-  ("white", "square", "line")   => 3.1
-  ("green", "circle", "dotted") => 5.2
-  ("blue", "triangle", "line")  => 2.3
-```
-"""
-function toDict(df, dimCols, valueCol)
-    toReturn = Dict()
-    for r in eachrow(df)
-        keyValues = []
-        [push!(keyValues,r[d]) for d in dimCols]
-        toReturn[(keyValues...)] = r[valueCol]
-    end
-    return toReturn
-end
-
-##############################################################################
-##
-## toDataFrame()
-##
-##############################################################################
-
-toDataFrame(cols::Tuple, prefix="x") =
-    DataFrame(;(Symbol("$prefix$c") => cols[c] for c in fieldnames(cols))...)
-toDataFrame(cols::NamedTuples.NamedTuple, prefix="") =
-    DataFrame(;(c => cols[c] for c in fieldnames(cols))...)
-toDataFrame(cols::Array, prefix="y") =
-    DataFrame(;Symbol("y1") => [c for c in cols])
-
-"""
-    toDataFrame(t)
-
-Convert an IndexedTable of type NDSparse to a DataFrame, maintaining column types and (eventual) column names.
-
-"""
-toDataFrame(t::IndexedTables.NDSparse) =
-    hcat(toDataFrame(columns(keys(t))), toDataFrame(columns(values(t)),"y"))
-
-##############################################################################
-##
-## defEmptyIT()
-##
-##############################################################################
-
-"""
-  defEmptyIT(dimNames, dimTypes; <keyword arguments>)
-
-Define empty IndexedTable(s) with the specific dimension(s) and type(s).
-
-# Arguments
-* `dimNames`: array of names of the dimensions to define (can be empty)
-* `dimTypes`: array of types of the dimensions (must be same length of dimNames if the latter is not null)
-* `valueNames = []` array of names of the value cols to define (can be empty)
-* `valueTypes=[Float64]` array of types of the value cols to define (must be same length of valueNames if the latter is not null)
-* `n=1`: number of copies of the specified tables to return
-
-# Examples
-```julia
-julia> price,demand,supply = defEmptyVars(["region","item","qclass"],[String,String,Int64],valueNames=["val2000","val2010"],valueTypes=[Float64,Float64],n=3 )
-julia> waterContent = defEmptyVars(["region","item"],[String,String])
-julia> price["US","apple",1] = 3.2,3.4
-julia> waterContent["US","apple"] = 0.2
-```
-
-# Notes
-Single index or single column can not be associated to a name.
-"""
-function defEmptyIT(dimNames, dimTypes; valueNames=[],valueTypes=[Float64],n=1)
-    toReturn = []
-    dimSNames = [Symbol(d) for d in dimNames]
-    valueSNames = [Symbol(d) for d in valueNames]
-    for i in 1:n
-        # inside the loop as they are passed by reference!
-        dimValues = [Array{T,1}() for T in dimTypes]
-        valueValues = [Array{T,1}() for T in valueTypes]
-        t = Any
-        if (length(dimTypes) > 1)
-            d = length(dimSNames)  > 0 ? Columns(dimValues..., names=dimSNames) : Columns(dimValues...)
-            if (length(valueTypes) > 1)
-                v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
-                t = IndexedTables.NDSparse(d,v)
-            else
-                t = IndexedTables.NDSparse(d,valueValues[1])
-            end
-        else
-            if (length(valueTypes) > 1)
-                v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
-                t = IndexedTables.NDSparse(dimValues[1],v)
-            else
-                t = IndexedTables.NDSparse(dimValues[1],valueValues[1])
-            end
-        end
-        if(n==1)
-            return t
-        else
-            push!(toReturn,t)
-        end
-    end
-    return (toReturn...)
-end
-
-##############################################################################
-##
-## defVars()
-##
-##############################################################################
-
-"""
-  defVars(vars, df, dimensions;<keyword arguments>)
-
-Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
-
-# Arguments
-* `vars`: the array of variables to lookup
-* `df`: the source of the dataframe, that must be in the format parName|d1|d2|...|value
-* `dimensions`: the name of the column containing the dimensions over which the variables are defined
-* `varNameCol (def: "varName")`: the name of the column in the df containing the variables names
-* `valueCol (def: "value")`: the name of the column in the df containing the values
-
-# Examples
-```julia
-julia> (vol,mortCoef)  = defVars(["vol","mortCoef"], forData,["region","d1","year"], varNameCol="parName", valueCol="value")
-```
-"""
-function defVars(vars, df, dimensions; varNameCol="varName", valueCol="value")
-    toReturn = []
-    sDimensions = [Symbol(d) for d in dimensions]
-    for var in vars
-        filteredDf = df[df[Symbol(varNameCol)] .== var,:]
-        #filteredDf = @where(df, _I_(Symbol(varNameCol)) .== var)
-        dimValues =  [toArray(filteredDf[Symbol(dim)]) for dim in dimensions]
-        values = toArray(filteredDf[Symbol(valueCol)])
-        t = IndexedTables.NDSparse(dimValues..., names=sDimensions, values)
-        if length(vars) > 1
-            push!(toReturn,t)
-        else
-            return t
-        end
-    end
-    return (toReturn...)
-end
-
-##############################################################################
-##
-## fillMissings!()
-##
-##############################################################################
-
-function explode(base, elements)
-    toReturn = []
-    for b in base
-        for e in elements
-            newkey = vcat(b,[e])
-            push!(toReturn,newkey)
-        end
-    end
-    return toReturn
-end
-
-function fillkeys(dimensions)
-    toReturn = [[]]
-    for d in dimensions
-        toReturn = explode(toReturn,d)
-    end
-    return toReturn
-end
-
-"""
-  fillMissings!(vars::IndexedTable, value, dimensions)
-
-For each values in the specified dimensions, fill the values of IndexedTable(s) without a corresponding key.
-
-As IndexedTables return a keyerror if they don't find the key, this funsction allows to "fill" the empty values
-with a given value.
-
-# Arguments
-* `vars`: the variable to fill the values. Can be either an Array of variables or a single one.
-* `value`: the value to be used to fill
-* `dimensions`: the arrays corresponding to the dimensions of the indexed table that one want to fill
-
-# Examples
-```julia
-julia> fillMissings!(quantity, 0, [priProducts, fTypes, dClasses])
-```
-"""
-function fillMissings!(vars::AbstractArray{<:NDSparse,1}, value, dimensions)
-    allKeys = fillkeys(dimensions)
-    #varsv = isa(vars, Array)? vars:[vars]
-    for var in vars
-        varKeys = [values(k_idx) for k_idx in keys(var)]
-        for k in allKeys
-            if !(k in varKeys)
-                var[k...] = value
-            end
-        end
-    end
-    return nothing
-end
-function fillMissings!(var::NDSparse, value, dimensions)
-    fillMissings!([var], value, dimensions)
-    return nothing
-end
+# ##############################################################################
+# ##
+# ## defEmptyIT()
+# ##
+# ##############################################################################
+#
+# """
+#   defEmptyIT(dimNames, dimTypes; <keyword arguments>)
+#
+# Define empty IndexedTable(s) with the specific dimension(s) and type(s).
+#
+# # Arguments
+# * `dimNames`: array of names of the dimensions to define (can be empty)
+# * `dimTypes`: array of types of the dimensions (must be same length of dimNames if the latter is not null)
+# * `valueNames = []` array of names of the value cols to define (can be empty)
+# * `valueTypes=[Float64]` array of types of the value cols to define (must be same length of valueNames if the latter is not null)
+# * `n=1`: number of copies of the specified tables to return
+#
+# # Examples
+# ```julia
+# julia> price,demand,supply = defEmptyVars(["region","item","qclass"],[String,String,Int64],valueNames=["val2000","val2010"],valueTypes=[Float64,Float64],n=3 )
+# julia> waterContent = defEmptyVars(["region","item"],[String,String])
+# julia> price["US","apple",1] = 3.2,3.4
+# julia> waterContent["US","apple"] = 0.2
+# ```
+#
+# # Notes
+# Single index or single column can not be associated to a name.
+# """
+# function defEmptyIT(dimNames, dimTypes; valueNames=[],valueTypes=[Float64],n=1)
+#     toReturn = []
+#     dimSNames = [Symbol(d) for d in dimNames]
+#     valueSNames = [Symbol(d) for d in valueNames]
+#     for i in 1:n
+#         # inside the loop as they are passed by reference!
+#         dimValues = [Array{T,1}() for T in dimTypes]
+#         valueValues = [Array{T,1}() for T in valueTypes]
+#         t = Any
+#         if (length(dimTypes) > 1)
+#             d = length(dimSNames)  > 0 ? Columns(dimValues..., names=dimSNames) : Columns(dimValues...)
+#             if (length(valueTypes) > 1)
+#                 v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
+#                 t = IndexedTables.NDSparse(d,v)
+#             else
+#                 t = IndexedTables.NDSparse(d,valueValues[1])
+#             end
+#         else
+#             if (length(valueTypes) > 1)
+#                 v = length(valueSNames) > 0 ? Columns(valueValues..., names=valueSNames) : Columns(valueValues...)
+#                 t = IndexedTables.NDSparse(dimValues[1],v)
+#             else
+#                 t = IndexedTables.NDSparse(dimValues[1],valueValues[1])
+#             end
+#         end
+#         if(n==1)
+#             return t
+#         else
+#             push!(toReturn,t)
+#         end
+#     end
+#     return (toReturn...,)
+# end
+#
+# ##############################################################################
+# ##
+# ## defVars()
+# ##
+# ##############################################################################
+#
+# """
+#   defVars(vars, df, dimensions;<keyword arguments>)
+#
+# Create the required IndexedTables from a common DataFrame while specifing the dimensional columns.
+#
+# # Arguments
+# * `vars`: the array of variables to lookup
+# * `df`: the source of the dataframe, that must be in the format parName|d1|d2|...|value
+# * `dimensions`: the name of the column containing the dimensions over which the variables are defined
+# * `varNameCol (def: "varName")`: the name of the column in the df containing the variables names
+# * `valueCol (def: "value")`: the name of the column in the df containing the values
+#
+# # Examples
+# ```julia
+# julia> (vol,mortCoef)  = defVars(["vol","mortCoef"], forData,["region","d1","year"], varNameCol="parName", valueCol="value")
+# ```
+# """
+# function defVars(vars, df, dimensions; varNameCol="varName", valueCol="value")
+#     toReturn = []
+#     sDimensions = [Symbol(d) for d in dimensions]
+#     for var in vars
+#         filteredDf = df[df[Symbol(varNameCol)] .== var,:]
+#         #filteredDf = @where(df, _I_(Symbol(varNameCol)) .== var)
+#         dimValues =  [toArray(filteredDf[Symbol(dim)]) for dim in dimensions]
+#         values = toArray(filteredDf[Symbol(valueCol)])
+#         t = IndexedTables.NDSparse(dimValues..., names=sDimensions, values)
+#         if length(vars) > 1
+#             push!(toReturn,t)
+#         else
+#             return t
+#         end
+#     end
+#     return (toReturn...,)
+# end
+#
+# ##############################################################################
+# ##
+# ## fillMissings!()
+# ##
+# ##############################################################################
+#
+# function explode(base, elements)
+#     toReturn = []
+#     for b in base
+#         for e in elements
+#             newkey = vcat(b,[e])
+#             push!(toReturn,newkey)
+#         end
+#     end
+#     return toReturn
+# end
+#
+# function fillkeys(dimensions)
+#     toReturn = [[]]
+#     for d in dimensions
+#         toReturn = explode(toReturn,d)
+#     end
+#     return toReturn
+# end
+#
+# """
+#   fillMissings!(vars::IndexedTable, value, dimensions)
+#
+# For each values in the specified dimensions, fill the values of IndexedTable(s) without a corresponding key.
+#
+# As IndexedTables return a keyerror if they don't find the key, this funsction allows to "fill" the empty values
+# with a given value.
+#
+# # Arguments
+# * `vars`: the variable to fill the values. Can be either an Array of variables or a single one.
+# * `value`: the value to be used to fill
+# * `dimensions`: the arrays corresponding to the dimensions of the indexed table that one want to fill
+#
+# # Examples
+# ```julia
+# julia> fillMissings!(quantity, 0, [priProducts, fTypes, dClasses])
+# ```
+# """
+# function fillMissings!(vars::AbstractArray{<:NDSparse,1}, value, dimensions)
+#     allKeys = fillkeys(dimensions)
+#     #varsv = isa(vars, Array)? vars:[vars]
+#     for var in vars
+#         varKeys = [values(k_idx) for k_idx in keys(var)]
+#         for k in allKeys
+#             if !(k in varKeys)
+#                 var[k...] = value
+#             end
+#         end
+#     end
+#     return nothing
+# end
+# function fillMissings!(var::NDSparse, value, dimensions)
+#     fillMissings!([var], value, dimensions)
+#     return nothing
+# end
 
 # ##############################################################################
 # ##
