@@ -2,7 +2,7 @@
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!
+export addCols!, pivot, customSort!, toDict
 
 
 #todo: customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame
@@ -256,48 +256,48 @@ function customSort!(df::DataFrame, sortops)
     return sort!(df, sortOptions)
 end
 
-# ##############################################################################
-# ##
-# ## toDict()
-# ##
-# ##############################################################################
-#
-# """
-#     toDict(df, dimCols, valueCol)
-#
-# Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
-#
-# # Arguments
-# * `df`: the dataframe to convert
-# * `dimCols`: the dimensions to be used as key (in the order given)
-# * `valueCol`: the dimension to be used to store the value
-#
-# # Examples
-# ```julia
-# julia> using DataFrames, LAJuliaUtils
-# julia> df = DataFrame(
-#                 colour = ["green","blue","white","green","green"],
-#                 shape = ["circle", "triangle", "square","square","circle"],
-#                 border = ["dotted", "line", "line", "line", "dotted"],
-#                 area = [1.1, 2.3, 3.1, 4.2, 5.2]
-#             )
-# julia> myDict = toDict(df,[:colour,:shape,:border],:area)
-# Dict{Any,Any} with 4 entries:
-#   ("green", "square", "line")   => 4.2
-#   ("white", "square", "line")   => 3.1
-#   ("green", "circle", "dotted") => 5.2
-#   ("blue", "triangle", "line")  => 2.3
-# ```
-# """
-# function toDict(df, dimCols, valueCol)
-#     toReturn = Dict()
-#     for r in eachrow(df)
-#         keyValues = []
-#         [push!(keyValues,r[d]) for d in dimCols]
-#         toReturn[(keyValues...,)] = r[valueCol]
-#     end
-#     return toReturn
-# end
+##############################################################################
+##
+## toDict()
+##
+##############################################################################
+
+"""
+    toDict(df, dimCols, valueCol)
+
+Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
+
+# Arguments
+* `df`: the dataframe to convert
+* `dimCols`: the dimensions to be used as key (in the order given)
+* `valueCol`: the dimension to be used to store the value
+
+# Examples
+```julia
+julia> using DataFrames, LAJuliaUtils
+julia> df = DataFrame(
+                colour = ["green","blue","white","green","green"],
+                shape = ["circle", "triangle", "square","square","circle"],
+                border = ["dotted", "line", "line", "line", "dotted"],
+                area = [1.1, 2.3, 3.1, 4.2, 5.2]
+            )
+julia> myDict = toDict(df,[:colour,:shape,:border],:area)
+Dict{Any,Any} with 4 entries:
+  ("green", "square", "line")   => 4.2
+  ("white", "square", "line")   => 3.1
+  ("green", "circle", "dotted") => 5.2
+  ("blue", "triangle", "line")  => 2.3
+```
+"""
+function toDict(df, dimCols, valueCol)
+    toReturn = Dict()
+    for r in eachrow(df)
+        keyValues = []
+        [push!(keyValues,r[d]) for d in dimCols]
+        toReturn[(keyValues...,)] = r[valueCol]
+    end
+    return toReturn
+end
 
 # ############################################################################
 # #
