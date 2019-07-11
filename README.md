@@ -5,7 +5,7 @@ Utility functions for Julia, mainly dataframes operations.
 Read more about them using the `?function` syntax (after the package has been installed and imported).
 
 This is NOT a Julia registered package:
-* install it with `Pkg.clone("https://github.com/sylvaticus/LAJuliaUtils.jl.git")`
+* install it with `] add https://github.com/sylvaticus/LAJuliaUtils.jl.git`
 * import it with `using LAJuliaUtils`
 
 Provided functions:
