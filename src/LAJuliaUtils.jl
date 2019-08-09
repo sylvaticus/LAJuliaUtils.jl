@@ -65,7 +65,7 @@ function addCols!(df::DataFrame, colsName::Union{Symbol, Vector{Symbol}}, colsTy
         error("colsName must have the same length of colsType")
     end
     for (i,e) in enumerate(colsNameV)
-        df[e] = Array{Union{colsTypeV[i],Missing},1}(missing,sfSize)
+        df.e = Array{Union{colsTypeV[i],Missing},1}(missing,sfSize)
     end
 
     return df
