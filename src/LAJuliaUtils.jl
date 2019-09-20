@@ -2,12 +2,13 @@
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict
+export addCols!, pivot, customSort!, toDict, findall
 
 
 #todo: customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame
 
 using DataFrames, DataStructures, IndexedTables #, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
+import Base.findall
 
 
 ##############################################################################
@@ -298,6 +299,61 @@ function toDict(df, dimCols, valueCol)
     end
     return toReturn
 end
+
+
+##############################################################################
+##
+## findall()
+##
+##############################################################################
+
+"""
+    findall(pattern,string)
+
+Find all the occurrences of `pattern` in `string`.
+
+# Arguments
+* `pattern`: A String or a Regex to lookup
+* `string`: The String where to lookup
+
+`findall` uses internally `findnext()` and returns an array of UnitRange with the ranges of the patterns (including interdependent ones).
+
+If pattern is not found an empty vector is returned.
+
+# Examples
+```julia
+julia> st = "Today is a fresh day: not too warm, not to cold, just fresh!"
+"Today is a fresh day: not too warm, not to cold, just fresh!"
+julia> ranges = findall("fresh",st)
+2-element Array{UnitRange{Int64},1}:
+ 12:16
+ 55:59
+julia> st2 = "aaffssffssffbbffssffcc"
+"aaffssffssffbbffssffcc"
+julia> ranges = findall("ffssff",st2)
+3-element Array{UnitRange{Int64},1}:
+ 3:8
+ 7:12
+ 15:20
+julia> ranges = findall("zz",st2)
+0-element Array{UnitRange{Int64},1}
+```
+"""
+function findall(pattern,string::AbstractString)
+    toReturn = UnitRange{Int64}[]
+    s = 1
+    while true
+        range = findnext(pattern,string,s)
+        if range == nothing
+             break
+        else
+            push!(toReturn, range)
+            s = first(range)+1
+        end
+    end
+    return toReturn
+end
+
 
 # ############################################################################
 # #
