@@ -308,13 +308,14 @@ end
 ##############################################################################
 
 """
-    findall(pattern,string)
+    findall(pattern,string,caseSensitive=true)
 
 Find all the occurrences of `pattern` in `string`.
 
 # Arguments
-* `pattern`: A String or a Regex to lookup
-* `string`: The String where to lookup
+* `pattern`:       A String or a Regex to lookup
+* `string`:        The String where to lookup
+* `caseSensitive`: Whenever look for a caseSensitive match (default: true)
 
 `findall` uses internally `findnext()` and returns an array of UnitRange with the ranges of the patterns (including interdependent ones).
 
@@ -339,9 +340,13 @@ julia> ranges = findall("zz",st2)
 0-element Array{UnitRange{Int64},1}
 ```
 """
-function findall(pattern,string::AbstractString)
+function findall(pattern,string::AbstractString,caseSensitive=true)
     toReturn = UnitRange{Int64}[]
     s = 1
+    if (!caseSensitive)
+      pattern = lowercase(pattern)
+      string = lowercase(string)
+    end
     while true
         range = findnext(pattern,string,s)
         if range == nothing
