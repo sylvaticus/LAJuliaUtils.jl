@@ -2,4 +2,4 @@ julia 0.7
 DataFrames 0.11.3
 DataStructures
 IndexedTables
-
+ZipFile

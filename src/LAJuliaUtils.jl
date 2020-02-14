@@ -2,12 +2,12 @@
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, findall
+export addCols!, pivot, customSort!, toDict, findall, unzip
 
 
 #todo: customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame
 
-using DataFrames, DataStructures, IndexedTables #, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
+using DataFrames, DataStructures, IndexedTables, ZipFile #, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
 import Base.findall
 
 
@@ -357,6 +357,47 @@ function findall(pattern,string::AbstractString,caseSensitive=true)
         end
     end
     return toReturn
+end
+
+
+# ##############################################################################
+# ##
+# ## unzip()
+# ##
+# ##############################################################################
+
+"""
+  unzip(file,exdir="")
+
+Unzip a zipped archive using ZipFile
+
+# Arguments
+* `file`:    a zip archive to unzip and extract (absolure or relative path)
+* `exdir=""`: an optional directory to specify the root of the folder where to extract the archive (absolute or relative).
+
+# Notes:
+* The function doesn't perform a check to see if all the zipped files have a common root.
+
+# Examples
+```julia
+julia> unzip("myarchive.zip",exdir="mydata")
+```
+"""
+function unzip(file,exdir="")
+    fileFullPath = isabspath(file) ?  file : joinpath(pwd(),file)
+    basePath = dirname(fileFullPath)
+    outPath = (exdir == "" ? basePath : (isabspath(exdir) ? exdir : joinpath(pwd(),exdir)))
+    isdir(outPath) ? "" : mkdir(outPath)
+    zarchive = ZipFile.Reader(fileFullPath)
+    for f in zarchive.files
+        fullFilePath = joinpath(outPath,f.name)
+        if (endswith(f.name,"/") || endswith(f.name,"\\"))
+            mkdir(fullFilePath)
+        else
+            write(fullFilePath, read(f))
+        end
+    end
+    close(zarchive)
 end
 
 
