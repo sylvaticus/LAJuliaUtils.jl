@@ -8,7 +8,7 @@ Various utility functions for Julia.
 
 Read more about them using the `?function` syntax (after the package has been installed and imported).
 
-This is NOT a Julia registered package:
+This is NOT (yet) a Julia registered package:
 * install it with `] add https://github.com/sylvaticus/LAJuliaUtils.jl.git`
 * import it with `using LAJuliaUtils`
 

@@ -112,22 +112,21 @@ julia> df = DataFrame(region   = ["US","US","US","US","EU","EU","EU","EU","US","
                       consumed = [4.3,7.4,2.5,9.8,3.2,4.3,6.5,3.0,  5.3,7.4,3.5,9.8,4.2,6.3,8.5,4.0],
                       category = ['A','A','A','A','A','A','A','A', 'B','B','B','B','B','B','B','B',])
 julia> longDf = DataFrames.stack(df,[:produced,:consumed])
-julia> pivDf  = pivot(longDf, [:product, :region,], :year, :value,
-                      ops    = [mean, var],
-                      filter = Dict(:variable => [:consumed]),
-                      sort   = [:product, (:region, true)]
-                     )
- 8×5 DataFrames.DataFrame
- │ Row │ product  │ region │ op     │ 2010 │ 2011 │
- ├─────┼──────────┼────────┼────────┼──────┼──────┤
- │ 1   │ "apple"  │ "US"   │ "mean" │ 4.8  │ 7.4  │
- │ 2   │ "apple"  │ "US"   │ "var"  │ 0.5  │ 0.0  │
- │ 3   │ "apple"  │ "EU"   │ "mean" │ 3.7  │ 5.3  │
- │ 4   │ "apple"  │ "EU"   │ "var"  │ 0.5  │ 2.0  │
- │ 5   │ "banana" │ "US"   │ "mean" │ 3.0  │ 9.8  │
- │ 6   │ "banana" │ "US"   │ "var"  │ 0.5  │ 0.0  │
- │ 7   │ "banana" │ "EU"   │ "mean" │ 7.5  │ 3.5  │
- │ 8   │ "banana" │ "EU"   │ "var"  │ 2.0  │ 0.5  │
+julia> pivDf  = pivot(longDf, [:product, :region, :variable], :year, :value,
+               ops    = [sum, mean, var],
+               filter = Dict(:variable => ["produced"],:product => ["apple"]),
+               sort   = [:product, (:region, true)]
+              )
+6×6 DataFrame
+│ Row │ product │ region │ variable │ op     │ 2010     │ 2011     │
+│     │ String  │ String │ Cat…     │ String │ Float64? │ Float64? │
+├─────┼─────────┼────────┼──────────┼────────┼──────────┼──────────┤
+│ 1   │ apple   │ US     │ produced │ mean   │ 3.8      │ 3.7      │
+│ 2   │ apple   │ US     │ produced │ sum    │ 7.6      │ 7.4      │
+│ 3   │ apple   │ US     │ produced │ var    │ 0.5      │ 0.5      │
+│ 4   │ apple   │ EU     │ produced │ mean   │ 3.2      │ 3.3      │
+│ 5   │ apple   │ EU     │ produced │ sum    │ 6.4      │ 6.6      │
+│ 6   │ apple   │ EU     │ produced │ var    │ 0.5      │ 0.5      │
 ```
 """
 function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::Symbol; ops=sum, filter::Dict=Dict(), sort=[])
@@ -141,8 +140,9 @@ function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::
     #filter=Dict()
     #sort=[]
 
+
     for (k,v) in filter
-      df = df[ [i in v for i in df[k]], :]
+      df = df[ [i in v for i in df[!,k]], :]
     end
 
     sortv = []
@@ -176,11 +176,12 @@ function pivot(df::AbstractDataFrame, rowFields, colField::Symbol, valuesField::
     end
 
     for op in opsv
-        dft = by(df, catFields) do df2
+        #dft = by(df, catFields) do df2
+         dft = combine(DataFrames.groupby(df, catFields)) do df2
             a = DataFrame()
-            a[valuesField] = op(df2[valuesField])
+            a[!,valuesField] = [op(df2[!,valuesField])]
             if(length(opsv)>1)
-                a[:op] = string(op)
+                a[!, :op] .= string(op)
             end
             a
         end
