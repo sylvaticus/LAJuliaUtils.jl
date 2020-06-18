@@ -2,7 +2,7 @@
 
 Various utility functions for Julia.
 
-[![Build Status](https://travis-ci.org/sylvaticus/LAJuliaUtils.jl.svg?branch=master)](https://travis-ci.org/sylvaticus/LAJuliaUtils.jl)
+[![Build Status](https://travis-ci.com/sylvaticus/LAJuliaUtils.jl.svg?branch=master)](https://travis-ci.com/sylvaticus/LAJuliaUtils.jl)
 [![codecov.io](http://codecov.io/github/sylvaticus/LAJuliaUtils.jl/coverage.svg?branch=master)](http://codecov.io/github/sylvaticus/LAJuliaUtils.jl?branch=master)
 
 
