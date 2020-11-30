@@ -20,6 +20,8 @@ Provided functions:
 * `pivot(df::AbstractDataFrame, rowFields, colField, valuesField; <kwd args>)` - Pivot and optionally filter and sort in a single function
 * `toDict(df, dimCols, valueCol)`    - Convert a DataFrame in a dictionary, specifying the dimensions to be used as key and the one to be used as value.
 * `unzip(unzip(file,exdir="")`       - Unzip a zipped archive using ZipFile
+* `addIfNeeded(pkgs...)`             - Add (if needed) the packages in the argument list (given as strings)
+* `installAndUse(pkgs...)`           - Add (if needed) and use the packages in the argument list (given as strings)
 
 Julia 0.6 only:
 

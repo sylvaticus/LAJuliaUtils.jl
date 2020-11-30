@@ -2,12 +2,12 @@
 
 module LAJuliaUtils
 
-export addCols!, pivot, customSort!, toDict, findall, unzip
+export addCols!, pivot, customSort!, toDict, findall, unzip, addIfNeeded, installAndUse
 
 
 #todo: customSort!, toDict, defEmptyIT, defVars, fillMissings!, toDataFrame
 
-using DataFrames, DataStructures, IndexedTables, ZipFile #, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
+using Pkg, DataFrames, DataStructures, IndexedTables, ZipFile #, Missings#, DataFramesMeta  # DataFramesMeta , SymPy,  QuadGK
 import Base.findall
 
 
@@ -399,6 +399,57 @@ function unzip(file,exdir="")
         end
     end
     close(zarchive)
+end
+
+##############################################################################
+##
+## addIfNeeded(), installAndUse()
+##
+##############################################################################
+
+
+"""
+  addIfNeeded(pkgs...)
+
+Add if needed the packages in the argument list (given as strings)
+
+# Note:
+If name collisions are possible, this function doesn't try to resolve them.
+
+# Examples
+```julia
+julia> addIfNeeded("FuzzyCompletions", "Observables", "JSON")
+```
+"""
+function addIfNeeded(pkgs...)
+    isinstalled(pkg::String) = any(x -> x.name == pkg && x.is_direct_dep, values(Pkg.dependencies()))
+    [Pkg.add(pkg) for pkg in pkgs  if !isinstalled(pkg)]
+end
+
+
+"""
+  installAndUse(pkgs...)
+
+Add (if needed) and use the packages in the argument list (given as strings)
+
+# Note:
+If name collisions are possible, this function doesn't try to resolve them.
+
+# Examples
+```julia
+julia> uinstallAndUse("FuzzyCompletions", "Observables", "JSON")
+```
+"""
+function installAndUse(pkgs...)
+    isinstalled(pkg::String) = any(x -> x.name == pkg && x.is_direct_dep, values(Pkg.dependencies()))
+    for pkg in pkgs
+        if isinstalled(pkg)
+            @eval using $(Symbol(pkg))
+        else
+            Pkg.add(pkg)
+            @eval using $(Symbol(pkg))
+        end
+    end
 end
 
 
