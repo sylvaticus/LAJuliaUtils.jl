@@ -1,5 +1,6 @@
-using DataFrames, LAJuliaUtils, Statistics
 using Test
+using DataFrames, LAJuliaUtils, Statistics
+
 
 df = DataFrame(region   = ["US","US","US","US","EU","EU","EU","EU","US","US","US","US","EU","EU","EU","EU"],
                product  = ["apple","apple","banana","banana","apple","apple","banana","banana","apple","apple","banana","banana","apple","apple","banana","banana"],
